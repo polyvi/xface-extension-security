@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-           id="com.polyvi.xface.extension.security"
-      version="1.0.0">
+        id="com.polyvi.xface.extension.security"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        version="1.0.0">
 
     <name>Security</name>
     <author>PolyVi Inc.</author>
@@ -18,6 +19,10 @@
         <clobbers target="SecurityOptions" />
     </js-module>
 
+    <engines>
+      <engine name="xFace" version=">=3.0.0" />
+    </engines>
+
     <!-- wp8 -->
     <platform name="wp8">
         <config-file target="config.xml" parent="/*">
@@ -31,7 +36,24 @@
     </platform>
 
     <!-- android -->
+    <platform name="android">
+        <js-module src="www/StringEncodeType.js" name="StringEncodeType">
+            <clobbers target="StringEncodeType" />
+        </js-module>
 
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="Security">
+                <param name="android-package" value="com.polyvi.xface.extension.XSecurityExt"/>
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        </config-file>
+
+        <source-file src="src/android/XSecurityExt.java" target-dir="src/com/polyvi/xface/extension" />
+
+     </platform>
 
     <!-- ios -->
 

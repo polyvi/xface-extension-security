@@ -1,4 +1,3 @@
-cordova.define("com.polyvi.xface.plugin.StringEncodeType", function(require, exports, module) {
 /*
  This file was modified from or inspired by Apache Cordova.
 
@@ -63,4 +62,3 @@ StringEncodeType.Base64 = 1;
 StringEncodeType.HEX = 2;
 
 module.exports = StringEncodeType;
-});

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+ <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="com.polyvi.xface.extension.security"
@@ -56,6 +56,17 @@
      </platform>
 
     <!-- ios -->
+    <platform name="ios">
+        <js-module src="www/StringEncodeType.js" name="StringEncodeType">
+            <clobbers target="StringEncodeType" />
+        </js-module>
 
-
+        <config-file parent="/*" target="config.xml">
+            <feature name="Security">
+                <param name="ios-package" value="XSecurityExt" />
+            </feature>
+        </config-file>
+        <header-file src="src/ios/XSecurityExt.h" />
+        <source-file src="src/ios/XSecurityExt.m" />
+    </platform>
 </plugin>

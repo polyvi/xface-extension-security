@@ -7,6 +7,8 @@ using System.IO.IsolatedStorage;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
+using xFaceLib.runtime;
+using xFaceLib.Util;
 
 namespace WPCordovaClassLib.Cordova.Commands
 {
@@ -77,7 +79,7 @@ namespace WPCordovaClassLib.Cordova.Commands
         }
     }
 
-    public class Security : BaseCommand
+    public class Security : XBaseCommand
     {
 
         private const int SECURITY_KEY_MIN_LENGTH = 8;
@@ -102,9 +104,14 @@ namespace WPCordovaClassLib.Cordova.Commands
             sKey = args[0];
             sourceDataStr = args[1];
             SecurityOptions option = new SecurityOptions();
-            if (null != args[2])
+            if (args.Length > 2 && null != args[2])
             {
                 option = JSON.JsonHelper.Deserialize<SecurityOptions>(args[2]);
+            }
+
+            if (null == option)
+            {
+                option = new SecurityOptions();
             }
 
             //check
@@ -156,9 +163,14 @@ namespace WPCordovaClassLib.Cordova.Commands
             sKey = args[0];
             sourceDataStr = args[1];
             SecurityOptions option = new SecurityOptions();
-            if (null != args[2])
+            if (args.Length > 2 && null != args[2])
             {
                 option = JSON.JsonHelper.Deserialize<SecurityOptions>(args[2]);
+            }
+
+            if (null == option)
+            {
+                option = new SecurityOptions();
             }
 
             //check
@@ -376,6 +388,10 @@ namespace WPCordovaClassLib.Cordova.Commands
                 option = JSON.JsonHelper.Deserialize<SecurityOptions>(args[3]);
             }
 
+            if (null == option)
+            {
+                option = new SecurityOptions();
+            }
             //check
             if (string.IsNullOrEmpty(sKey) || sKey.Length < 8)
             {
@@ -384,8 +400,13 @@ namespace WPCordovaClassLib.Cordova.Commands
                 return;
             }
 
+            string appWorkSpace = this.app.GetWorkSpace();
+            sourceFilePath = XUtils.ResolvePath(appWorkSpace, sourceFilePath);
+            string targetPath = targetFilePath;
+            targetFilePath = XUtils.ResolvePath(appWorkSpace, targetFilePath);
             //path_error
-            if (null == sourceFilePath || null == targetFilePath)
+            if ( string.IsNullOrEmpty(sourceFilePath) || string.IsNullOrEmpty(targetFilePath)
+                || appWorkSpace.Equals(sourceFilePath) || appWorkSpace.Equals(targetFilePath))
             {
                 XLog.WriteError("Input data invalid path error!");
                 DispatchCommandResult(new PluginResult(PluginResult.Status.ERROR, SecurityError.PATH_ERR));
@@ -433,12 +454,12 @@ namespace WPCordovaClassLib.Cordova.Commands
 
                 }
                 //返回加密后文件路径
-                DispatchCommandResult(new PluginResult(PluginResult.Status.OK, targetFilePath));
+                DispatchCommandResult(new PluginResult(PluginResult.Status.OK, targetPath));
 
             }
             catch (Exception ex)
             {
-                if (ex is FormatException || ex is ArgumentNullException || ex is ArgumentException || ex is ArgumentOutOfRangeException || ex is NotSupportedException)
+                if (ex is FormatException || ex is ArgumentNullException || ex is ArgumentException || ex is ArgumentOutOfRangeException || ex is NotSupportedException || ex is IsolatedStorageException)
                 {
                     string operation = encrypt ? "encrypt" : "decrypt";
                     XLog.WriteError("DoFileCrypt " + operation + " error with Exception : " + ex.Message);

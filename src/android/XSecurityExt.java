@@ -102,8 +102,13 @@ public class XSecurityExt extends CordovaPlugin {
 
         XPathResolver pathResolver = new XPathResolver(filename, appWorkspacePath, null);
         String absFilePath = pathResolver.resolve();
-        if((null == absFilePath) || !XFileUtils.isFileAncestorOf(appWorkspacePath, absFilePath)) {
-            throw new IllegalArgumentException();
+
+        if((null == absFilePath) ||!XFileUtils.isFileAncestorOf(appWorkspacePath, absFilePath)) {
+            if(sourceOrTarget){ // 加密原文件不存在应该抛出FileNotFoundException异常
+                throw new FileNotFoundException();
+            }else {// 加密目的文件路径有问题应该抛出IllegalArgumentException异常
+                throw new IllegalArgumentException();
+            }
         }
 
         // 对文件作路径解析和检测
@@ -113,11 +118,11 @@ public class XSecurityExt extends CordovaPlugin {
             throw new IllegalArgumentException();
         }
 
-        if (sourceOrTarget) {        //当前文件是源文件，该文件必须存在
+        if (sourceOrTarget) { //当前文件是源文件，该文件必须存在
             if(!requestFile.exists()){
                 throw new FileNotFoundException();
             }
-        }else {       //当前文件是目的文件，该文件必须不存在
+        }else { //当前文件是目的文件，该文件必须不存在
 		    if(requestFile.exists()){
                 requestFile.delete();
 		    }

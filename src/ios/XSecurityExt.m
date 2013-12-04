@@ -19,16 +19,19 @@
  along with xFace.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <CommonCrypto/CommonCryptor.h>
 #import "XSecurityExt.h"
-#import <Cordova/NSData+Base64.h>
-#import <Cordova/CDVPluginResult.h>
+
 #import <XFace/XApplication.h>
 #import <XFace/XUtils.h>
 #import <XFace/XCipher.h>
 #import <Cordova/NSArray+Comparisons.h>
 #import <XFace/NSData+Encoding.h>
 #import <XFace/md5.h>
+
+#import <CommonCrypto/CommonCryptor.h>
+#import <Cordova/NSData+Base64.h>
+#import <Cordova/CDVPluginResult.h>
+#import <Cordova/CDVDebug.h>
 
 @interface CDVPluginResult (XPluginResult)
 
@@ -161,7 +164,7 @@ const NSDictionary* defaultJsOptions;
     }
     else
     {
-        XLogE(@"Encrypt failed！");
+        ALog(@"Encrypt failed！");
         result = [CDVPluginResult resultWithStatus: CDVCommandStatus_ERROR messageAsString: @"Encrypt failed！"];
     }
 
@@ -199,7 +202,7 @@ const NSDictionary* defaultJsOptions;
     }
     else
     {
-        XLogE(@"Dencrypt failed！");
+        ALog(@"Dencrypt failed！");
         result = [CDVPluginResult resultWithStatus: CDVCommandStatus_ERROR messageAsString: @"Dencrypt failed！"];
     }
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];

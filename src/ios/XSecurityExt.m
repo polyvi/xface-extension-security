@@ -32,22 +32,21 @@
 
 @interface CDVPluginResult (XPluginResult)
 
-- (CDVPluginResult*) initWithStatus:(CDVCommandStatus)statusOrdinal message:(id)theMessage;
-+ (CDVPluginResult*) ok:(id)theMessage;
-+ (CDVPluginResult*) error:(id)theMessage;
++ (CDVPluginResult*) ok:(NSString*)theMessage;
++ (CDVPluginResult*) error:(int)code;
 
 @end
 
 @implementation CDVPluginResult (XPluginResult)
 
-+ (CDVPluginResult*) ok:(id)theMessage
++ (CDVPluginResult*) ok:(NSString*)theMessage
 {
-    return [[CDVPluginResult alloc] initWithStatus:CDVCommandStatus_OK message:theMessage];
+    return [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:theMessage];
 }
 
-+ (CDVPluginResult*) error:(id)theMessage
++ (CDVPluginResult*) error:(int)code
 {
-    return [[CDVPluginResult alloc] initWithStatus:CDVCommandStatus_ERROR message:theMessage];
+    return [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsInt:code];
 }
 
 @end
@@ -166,13 +165,6 @@ const NSDictionary* defaultJsOptions;
         result = [CDVPluginResult resultWithStatus: CDVCommandStatus_ERROR messageAsString: @"Encrypt failed！"];
     }
 
-    resultData = [cipher decryptData:resultData];
-
-    if(resultData != nil)//return string
-    {
-        NSString* resultstr = [[NSString alloc] initWithData:resultData encoding:NSUTF8StringEncoding];
-    }
-
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
@@ -239,14 +231,14 @@ const NSDictionary* defaultJsOptions;
     id<XApplication> app = [self ownerApp];
     if( ![self checkArguments:arguments] )
     {
-        return [CDVPluginResult error:@(PATH_ERR)];
+        return [CDVPluginResult error:PATH_ERR];
     }
     sourceFilePath = [XUtils resolvePath:sourceFilePath usingWorkspace:[app getWorkspace]];
     targetFilePath = [XUtils resolvePath:targetFilePath usingWorkspace:[app getWorkspace]];
     NSFileManager* fileMgr = [NSFileManager defaultManager];
     if(![fileMgr fileExistsAtPath:sourceFilePath])
     {
-        return [CDVPluginResult error:@(FILE_NOT_FOUND_ERR)];
+        return [CDVPluginResult error:FILE_NOT_FOUND_ERR];
     }
 
     NSData* sourceData          = nil;//原数据
@@ -265,7 +257,7 @@ const NSDictionary* defaultJsOptions;
         }
     } else
     {
-        return [CDVPluginResult error:@(OPERATION_ERR)];
+        return [CDVPluginResult error:OPERATION_ERR];
     }
     return nil;
 }

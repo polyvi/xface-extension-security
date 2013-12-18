@@ -19,7 +19,7 @@
  along with xFace.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package com.polyvi.xface.extension;
+package com.polyvi.xface.extension.security;
 
 import java.io.File;
 import java.io.FileNotFoundException;

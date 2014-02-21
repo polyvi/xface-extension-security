@@ -33,6 +33,8 @@
 #import <Cordova/CDVPluginResult.h>
 #import <Cordova/CDVDebug.h>
 
+#import "CDVFile.h"
+
 @interface CDVPluginResult (XPluginResult)
 
 + (CDVPluginResult*) ok:(NSString*)theMessage;
@@ -88,6 +90,12 @@ typedef NSUInteger SecurityError;
     @returns 有效返回YES,否则返回NO
  */
 - (BOOL) checkArguments:(NSArray*)arguments;
+
+/**
+    获取有效的file路径
+    @returns 有效的file路径，如果不能正确获取到路径，则返回nil
+ */
+- (NSString *) getValidFilePath:(NSString *)filePath usingFilePlugin:(CDVFile *)filePlugin;
 
 /**
     根据arguments 和 action 加密或解密文件
@@ -231,13 +239,14 @@ const NSDictionary* defaultJsOptions;
 
     XCipher* cipher = [ciphers cipherForKey:alg];
 
-    id<XApplication> app = [self ownerApp];
     if( ![self checkArguments:arguments] )
     {
         return [CDVPluginResult error:PATH_ERR];
     }
-    sourceFilePath = [XUtils resolvePath:sourceFilePath usingWorkspace:[app getWorkspace]];
-    targetFilePath = [XUtils resolvePath:targetFilePath usingWorkspace:[app getWorkspace]];
+
+    CDVFile *filePlugin = [self.commandDelegate getCommandInstance:@"File"];
+    sourceFilePath = [self getValidFilePath:sourceFilePath usingFilePlugin:filePlugin];
+    targetFilePath = [self getValidFilePath:targetFilePath usingFilePlugin:filePlugin];
     NSFileManager* fileMgr = [NSFileManager defaultManager];
     if(![fileMgr fileExistsAtPath:sourceFilePath])
     {
@@ -280,25 +289,47 @@ const NSDictionary* defaultJsOptions;
 
     NSString* sourceFilePath = [arguments objectAtIndex:1];
     NSString* targetFilePath = [arguments objectAtIndex:2];
-    id<XApplication> app = [self ownerApp];
     //不能是空串
     if(0 == [sourceFilePath length] || 0 == [targetFilePath length])
     {
         return NO;
     }
-    //都是相对workspace的相对路径，不能是 形如C:/a/bc 这种
-    if( (NSNotFound !=[sourceFilePath rangeOfString:@":"].location) || (NSNotFound !=[targetFilePath rangeOfString:@":"].location) )
+
+    CDVFile *filePlugin = [self.commandDelegate getCommandInstance:@"File"];
+    BOOL ret = [self getValidFilePath:sourceFilePath usingFilePlugin:filePlugin] &&
+               [self getValidFilePath:targetFilePath usingFilePlugin:filePlugin];
+    return ret;
+}
+
+- (NSString *) getValidFilePath:(NSString *)filePath usingFilePlugin:(CDVFile *)filePlugin
+{
+    //有效路径形式有以下几种：
+    //1. 以'/'或'file://'开头的绝对路径
+    //2. cdvfile://localhost/<filesystemType>/<path to file>
+    //3. 相对appworkspace的相对路径
+    NSString *validFilePath = nil;
+    CDVFilesystemURL *fsURL = nil;
+    NSString *resolvedSourceFilePath = nil;
+    if ([XUtils isAbsolute:filePath])
     {
-        return NO;
+        filePath = [XUtils getAbsolutePath:filePath];
+        fsURL = [filePlugin fileSystemURLforLocalPath:filePath];
+    } else if ([filePath hasPrefix:kCDVFilesystemURLPrefix]){
+        fsURL = [CDVFilesystemURL fileSystemURLWithString:filePath];
+    } else if (NSNotFound !=[filePath rangeOfString:@":"].location) {
+        return nil; //不支持形如C:/a/bc的路径
+    } else{
+        resolvedSourceFilePath = [XUtils resolvePath:filePath usingWorkspace:[[self ownerApp] getWorkspace]];
     }
-    sourceFilePath = [XUtils resolvePath:sourceFilePath usingWorkspace:[app getWorkspace]];
-    targetFilePath = [XUtils resolvePath:targetFilePath usingWorkspace:[app getWorkspace]];
-    if (!sourceFilePath || !targetFilePath)
-    {
-        //不在workspace下
-        return NO;
+
+    if (fsURL) {
+        NSObject<CDVFileSystem> *fs = [filePlugin filesystemForURL:fsURL];
+        validFilePath = [fs filesystemPathForURL:fsURL];
+    } else {
+        validFilePath = resolvedSourceFilePath;
     }
-    return YES;
+
+    return validFilePath;
 }
 
 @end

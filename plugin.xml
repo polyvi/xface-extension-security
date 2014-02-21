@@ -11,6 +11,8 @@
     <license>GPLv3</license>
     <keywords>cordova,xface,Security</keywords>
 
+    <dependency id="org.apache.cordova.file" />
+
     <js-module src="www/Security.js" name="Security">
         <clobbers target="xFace.Security" />
     </js-module>

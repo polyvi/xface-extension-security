@@ -128,8 +128,18 @@ Security.prototype.decrypt = function(key, encryptedText, successCallback, error
         }
  * @method encryptFile
  * @param {String} key 密钥，长度必须大于或等于8个字符
- * @param {String} sourceFilePath 要加密的文件路径，只支持相对路径（相对于应用的工作空间）
- * @param {String} targetFilePath 用户指定加密后生成的文件路径，只支持相对路径（相对于应用的工作空间）
+ * @param {String} sourceFilePath 要加密的文件路径<br/>
+ *        文件路径支持的类型：<br/>
+ *          1.相对路径，例如："myPath/test.txt"，则默认在app的workspace下<br/>
+ *          2.全路径，例如："/myPath/..."<br/>
+ *          3.file://协议的全路径，例如："file://myPath/..."<br/>
+ *          4.通过{{#crossLink "File"}}{{/crossLink}}扩展获取的URL，参见{{#crossLink "Entry/toURL"}}{{/crossLink}}
+ * @param {String} targetFilePath 用户指定加密后生成的文件路径<br/>
+ *        文件路径支持的类型：<br/>
+ *          1.相对路径，例如："myPath/test.txt"，则默认在app的workspace下<br/>
+ *          2.全路径，例如："/myPath/..."<br/>
+ *          3.file://协议的全路径，例如："file://myPath/..."<br/>
+ *          4.通过{{#crossLink "File"}}{{/crossLink}}扩展获取的URL，参见{{#crossLink "Entry/toURL"}}{{/crossLink}}
  * @param {Function} [successCallback] 成功回调函数
  * @param {String} successCallback.path 该参数用于返回新生成加密文件的路径
  * @param {Function} [errorCallback]  失败回调函数
@@ -165,8 +175,18 @@ Security.prototype.encryptFile = function(key, sourceFilePath, targetFilePath, s
         }
  * @method decryptFile
  * @param {String} key 密钥，长度必须大于或等于8个字符
- * @param {String} sourceFilePath 要解密的文件路径，只支持相对路径（相对于应用的工作空间）
- * @param {String} targetFilePath 用户指定解密后生成的文件路径，只支持相对路径（相对于应用的工作空间）
+ * @param {String} sourceFilePath 要解密的文件路径<br/>
+ *        文件路径支持的类型：<br/>
+ *          1.相对路径，例如："myPath/test.txt"，则默认在app的workspace下<br/>
+ *          2.全路径，例如："/myPath/..."<br/>
+ *          3.file://协议的全路径，例如："file://myPath/..."<br/>
+ *          4.通过{{#crossLink "File"}}{{/crossLink}}扩展获取的URL，参见{{#crossLink "Entry/toURL"}}{{/crossLink}}
+ * @param {String} targetFilePath 用户指定解密后生成的文件路径<br/>
+ *        文件路径支持的类型：<br/>
+ *          1.相对路径，例如："myPath/test.txt"，则默认在app的workspace下<br/>
+ *          2.全路径，例如："/myPath/..."<br/>
+ *          3.file://协议的全路径，例如："file://myPath/..."<br/>
+ *          4.通过{{#crossLink "File"}}{{/crossLink}}扩展获取的URL，参见{{#crossLink "Entry/toURL"}}{{/crossLink}}
  * @param {Function} [successCallback] 成功回调函数
  * @param {String} successCallback.path 该参数用于返回新生成解密文件的路径
  * @param {Function} [errorCallback]  失败回调函数

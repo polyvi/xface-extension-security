@@ -80,7 +80,7 @@ public class XSecurityExt extends CordovaPlugin {
     XCryptor mCryptor = new XCryptor();
 
     private String getWorkspacePath(){
-        XAppWebView xAppWebView = (XAppWebView) webView;
+        XAppWebView xAppWebView = (XAppWebView) this.webView;
         String appWorkspace = xAppWebView.getOwnerApp().getWorkSpace();
         return appWorkspace;
     }
@@ -100,10 +100,10 @@ public class XSecurityExt extends CordovaPlugin {
             throw new IllegalArgumentException();
         }
 
-        XPathResolver pathResolver = new XPathResolver(filename, appWorkspacePath, null);
-        String absFilePath = pathResolver.resolve();
+        XPathResolver pathResolver = new XPathResolver(filename, appWorkspacePath);
+        String absFilePath = pathResolver.resolve(this.webView.getResourceApi());
 
-        if((null == absFilePath) ||!XFileUtils.isFileAncestorOf(appWorkspacePath, absFilePath)) {
+        if (!XFileUtils.isFilePathValid(absFilePath)) {
             if(sourceOrTarget){ // 加密原文件不存在应该抛出FileNotFoundException异常
                 throw new FileNotFoundException();
             }else {// 加密目的文件路径有问题应该抛出IllegalArgumentException异常

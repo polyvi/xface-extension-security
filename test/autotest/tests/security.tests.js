@@ -55,6 +55,18 @@ describe("Security", function() {
     var FILE_NOT_FOUND_ERR = 1;
     var PATH_ERR = 2;
     var OPERATION_ERR = 3;
+
+    // deletes file, if it exists, then invokes callback
+    var deleteFile = function(rootEntry, fileName, callback) {
+        rootEntry.getFile(fileName, null,
+            // remove file system entry
+            function(entry) {
+                entry.remove(callback, function() { console.log('[ERROR] deleteFile cleanup method invoked fail callback.'); });
+            },
+            // doesn't exist
+            callback);
+    };
+
     it("security.spec.1 should exist", function() {
         expect(xFace.Security).toBeDefined();
     });
@@ -770,5 +782,260 @@ describe("Security", function() {
             });
         });
 
+    });
+
+    describe("File Path", function() {
+        it("security.spec.39 success callback should be called with relative file path", function() {
+            var win = jasmine.createSpy("Win").andCallFake(function(decryptedFilePath) {
+                expect(decryptedFilePath).toBeDefined();
+                expect(decryptedFilePath).toNotBe(null);
+            }),
+                fail = jasmine.createSpy("Fail");
+            var sourceFilePath = !isAndroid() ? "encrypt_target.apk" : "decrypt_source.apk";
+            var targetFilePath = "decrypt_target.apk";
+            runs(function() {
+                xFace.Security.decryptFile(key, sourceFilePath, targetFilePath, win, fail);
+            });
+            waitsFor(function() {
+               return win.wasCalled || fail.wasCalled;
+            }, "win never called", timeout);
+            runs(function() {
+                expect(win).toHaveBeenCalled();
+                expect(fail).not.toHaveBeenCalled();
+            });
+        });
+
+        it("security.spec.40 success callback should be called with absolute appworkspace file path", function() {
+            var win = jasmine.createSpy("Win").andCallFake(function(decryptedFilePath) {
+                expect(decryptedFilePath).toBeDefined();
+                expect(decryptedFilePath).toNotBe(null);
+            }),
+                fail = jasmine.createSpy("Fail");
+            var sourceFilePath = !isAndroid() ? "encrypt_target.apk" : "decrypt_source.apk";
+            var targetFilePath = "decrypt_target.apk";
+            var cdvfileURL = workspace_root.toURL() + sourceFilePath;
+            var unsupportedOperation = jasmine.createSpy("Operation not supported");
+            runs(function() {
+                cordova.exec(function(localPath) {
+                    xFace.Security.decryptFile(key, localPath, targetFilePath, win, fail);
+                }, unsupportedOperation, 'File', '_getLocalFilesystemPath', [cdvfileURL]);
+            });
+            waitsFor(function() {
+               return win.wasCalled || fail.wasCalled || unsupportedOperation.wasCalled;
+            }, "win never called", timeout);
+            runs(function() {
+                if (!unsupportedOperation.wasCalled) {
+                    expect(win).toHaveBeenCalled();
+                    expect(fail).not.toHaveBeenCalled();
+                }
+            });
+        });
+
+        it("security.spec.41 success callback should be called with absolute persisent file path", function() {
+            var win = jasmine.createSpy("Win").andCallFake(function(decryptedFilePath) {
+                expect(decryptedFilePath).toBeDefined();
+                expect(decryptedFilePath).toNotBe(null);
+            }),
+                fail = jasmine.createSpy("Fail")
+                getFileFail = jasmine.createSpy("getFileFail");
+
+            var sourceFilePath = !isAndroid() ? "encrypt_target.apk" : "decrypt_source.apk";
+            var targetFilePath = "decrypt_target.apk";
+            var cdvfileURL = persistent_root.toURL() + "/" + sourceFilePath;
+            var unsupportedOperation = jasmine.createSpy("Operation not supported");
+
+            var copyToWin = jasmine.createSpy("copyToWin").andCallFake(function(){
+                runs(function() {
+                    cordova.exec(function(localPath) {
+                        xFace.Security.decryptFile(key, localPath, targetFilePath, win, fail);
+                    }, unsupportedOperation, 'File', '_getLocalFilesystemPath', [cdvfileURL]);
+                });
+                waitsFor(function() {
+                   return win.wasCalled || fail.wasCalled || unsupportedOperation.wasCalled;
+                }, "win never called", timeout);
+                runs(function() {
+                    if (!unsupportedOperation.wasCalled) {
+                        expect(win).toHaveBeenCalled();
+                        expect(fail).not.toHaveBeenCalled();
+                    }
+                });
+            });
+
+            this.after(function() {
+                deleteFile(persistent_root, sourceFilePath);
+            });
+
+            var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
+                runs(function() {
+                    fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
+                });
+
+                waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
+
+                runs(function() {
+                    expect(copyToWin).toHaveBeenCalled();
+                    expect(fail).not.toHaveBeenCalled();
+                });
+            });
+
+            runs(function() {
+                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
+            });
+
+            waitsForAny(getFileWin, getFileFail);
+        });
+
+        it("security.spec.42 success callback should be called with appworkspace file url", function() {
+            var win = jasmine.createSpy("Win").andCallFake(function(decryptedFilePath) {
+                expect(decryptedFilePath).toBeDefined();
+                expect(decryptedFilePath).toNotBe(null);
+            }),
+                fail = jasmine.createSpy("Fail");
+            var sourceFilePath = !isAndroid() ? "encrypt_target.apk" : "decrypt_source.apk";
+            var targetFilePath = "decrypt_target.apk";
+            var cdvfileURL = workspace_root.toURL() + sourceFilePath;
+            var unsupportedOperation = jasmine.createSpy("Operation not supported");
+            runs(function() {
+                cordova.exec(function(localPath) {
+                    xFace.Security.decryptFile(key, "file://" + localPath, targetFilePath, win, fail);
+                }, unsupportedOperation, 'File', '_getLocalFilesystemPath', [cdvfileURL]);
+            });
+            waitsFor(function() {
+               return win.wasCalled || fail.wasCalled || unsupportedOperation.wasCalled;
+            }, "win never called", timeout);
+            runs(function() {
+                if (!unsupportedOperation.wasCalled) {
+                    expect(win).toHaveBeenCalled();
+                    expect(fail).not.toHaveBeenCalled();
+                }
+            });
+        });
+
+        it("security.spec.43 success callback should be called with persisent file url", function() {
+            var win = jasmine.createSpy("Win").andCallFake(function(decryptedFilePath) {
+                expect(decryptedFilePath).toBeDefined();
+                expect(decryptedFilePath).toNotBe(null);
+            }),
+                fail = jasmine.createSpy("Fail")
+                getFileFail = jasmine.createSpy("getFileFail");
+
+            var sourceFilePath = !isAndroid() ? "encrypt_target.apk" : "decrypt_source.apk";
+            var targetFilePath = "decrypt_target.apk";
+            var cdvfileURL = persistent_root.toURL() + "/" + sourceFilePath;
+            var unsupportedOperation = jasmine.createSpy("Operation not supported");
+
+            var copyToWin = jasmine.createSpy("copyToWin").andCallFake(function(){
+                runs(function() {
+                    cordova.exec(function(localPath) {
+                        xFace.Security.decryptFile(key, "file://" + localPath, targetFilePath, win, fail);
+                    }, unsupportedOperation, 'File', '_getLocalFilesystemPath', [cdvfileURL]);
+                });
+                waitsFor(function() {
+                   return win.wasCalled || fail.wasCalled || unsupportedOperation.wasCalled;
+                }, "win never called", timeout);
+                runs(function() {
+                    if (!unsupportedOperation.wasCalled) {
+                        expect(win).toHaveBeenCalled();
+                        expect(fail).not.toHaveBeenCalled();
+                    }
+                });
+            });
+
+            this.after(function() {
+                deleteFile(persistent_root, sourceFilePath);
+            });
+
+            var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
+                runs(function() {
+                    fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
+                });
+
+                waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
+
+                runs(function() {
+                    expect(copyToWin).toHaveBeenCalled();
+                    expect(fail).not.toHaveBeenCalled();
+                });
+            });
+
+            runs(function() {
+                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
+            });
+
+            waitsForAny(getFileWin, getFileFail);
+        });
+
+        it("security.spec.44 success callback should be called with appworkspace cdvfile url", function() {
+            var win = jasmine.createSpy("Win").andCallFake(function(decryptedFilePath) {
+                expect(decryptedFilePath).toBeDefined();
+                expect(decryptedFilePath).toNotBe(null);
+            }),
+                fail = jasmine.createSpy("Fail");
+            var sourceFilePath = !isAndroid() ? "encrypt_target.apk" : "decrypt_source.apk";
+            var targetFilePath = "decrypt_target.apk";
+            var cdvfileURL = workspace_root.toURL() + sourceFilePath;
+            runs(function() {
+                xFace.Security.decryptFile(key, cdvfileURL, targetFilePath, win, fail);
+            });
+            waitsFor(function() {
+               return win.wasCalled || fail.wasCalled;
+            }, "win never called", timeout);
+            runs(function() {
+                expect(win).toHaveBeenCalled();
+                expect(fail).not.toHaveBeenCalled();
+            });
+        });
+
+        it("security.spec.45 success callback should be called with persisent cdvfile url", function() {
+            var win = jasmine.createSpy("Win").andCallFake(function(decryptedFilePath) {
+                expect(decryptedFilePath).toBeDefined();
+                expect(decryptedFilePath).toNotBe(null);
+            }),
+                fail = jasmine.createSpy("Fail")
+                getFileFail = jasmine.createSpy("getFileFail");
+
+            var sourceFilePath = !isAndroid() ? "encrypt_target.apk" : "decrypt_source.apk";
+            var targetFilePath = "decrypt_target.apk";
+            var cdvfileURL = persistent_root.toURL() + "/" + sourceFilePath;
+            var unsupportedOperation = jasmine.createSpy("Operation not supported");
+
+            var copyToWin = jasmine.createSpy("copyToWin").andCallFake(function(){
+                runs(function() {
+                    xFace.Security.decryptFile(key, cdvfileURL, targetFilePath, win, fail);
+                });
+                waitsFor(function() {
+                   return win.wasCalled || fail.wasCalled || unsupportedOperation.wasCalled;
+                }, "win never called", timeout);
+                runs(function() {
+                    if (!unsupportedOperation.wasCalled) {
+                        expect(win).toHaveBeenCalled();
+                        expect(fail).not.toHaveBeenCalled();
+                    }
+                });
+            });
+
+            this.after(function() {
+                deleteFile(persistent_root, sourceFilePath);
+            });
+
+            var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
+                runs(function() {
+                    fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
+                });
+
+                waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
+
+                runs(function() {
+                    expect(copyToWin).toHaveBeenCalled();
+                    expect(fail).not.toHaveBeenCalled();
+                });
+            });
+
+            runs(function() {
+                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
+            });
+
+            waitsForAny(getFileWin, getFileFail);
+        });
     });
 });

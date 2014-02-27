@@ -155,7 +155,7 @@ public class XSecurityExt extends CordovaPlugin {
     /**
      * 异步执行扩展功能，并处理结果
      *
-     * @param zipOp
+     * @param securityOp
      * @param callbackContext
      * @param action
      */

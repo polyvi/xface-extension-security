@@ -26,3 +26,15 @@
 ### 1.0.1 Mon Jan 27 2014 15:56:30 GMT+0800 (CST)
  *  batch modify .reviewboard
  *  Incremented plugin version on dev branch to 1.0.1-dev
+
+## 1.0.2 (Fri Feb 28 2014)
+
+
+ *  [Android]Modify description of param mistake
+ *  [Android]Refactor extension-security and it can support 'file:///android_asset/' protocol
+ *  Fix the incorrect api description.
+ *  Added auto tests for resolving file path.
+ *  [Android]Security plugin supports file url 'cdvfile://localhost/<filesystemType>/<path to file>'
+ *  [iOS]Invoke file plugin resolveFilePath: method to process file path
+ *  [iOS] Improve the processing logic of file path and support more path forms.
+ *  Incremented plugin version on dev branch to 1.0.2-dev

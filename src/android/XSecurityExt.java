@@ -90,9 +90,9 @@ public class XSecurityExt extends CordovaPlugin {
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        super.initialize(cordova, webView);
         mCryptor = new XCryptor();
         mResourceApi = this.webView.getResourceApi();
-        super.initialize(cordova, webView);
     }
 
     public boolean execute(String action, final JSONArray args,

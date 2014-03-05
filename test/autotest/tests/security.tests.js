@@ -846,10 +846,10 @@ describe("Security", function() {
 
             var copyToWin = jasmine.createSpy("copyToWin").andCallFake(function(){
                 runs(function() {
-                    cordova.exec(function(localPath) {
-                        xFace.Security.decryptFile(key, localPath, targetFilePath, win, fail);
-                    }, unsupportedOperation, 'File', '_getLocalFilesystemPath', [cdvfileURL]);
-                });
+                        cordova.exec(function(localPath) {
+                            xFace.Security.decryptFile(key, localPath, targetFilePath, win, fail);
+                        }, unsupportedOperation, 'File', '_getLocalFilesystemPath', [cdvfileURL]);
+                    });
                 waitsFor(function() {
                    return win.wasCalled || fail.wasCalled || unsupportedOperation.wasCalled;
                 }, "win never called", timeout);
@@ -864,25 +864,22 @@ describe("Security", function() {
             this.after(function() {
                 deleteFile(persistent_root, sourceFilePath);
             });
-
-            var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
-                runs(function() {
-                    fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
-                });
-
-                waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
-
-                runs(function() {
-                    expect(copyToWin).toHaveBeenCalled();
-                    expect(fail).not.toHaveBeenCalled();
-                });
-            });
-
             runs(function() {
-                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
-            });
+                var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
+                    runs(function() {
+                        fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
+                    });
 
-            waitsForAny(getFileWin, getFileFail);
+                    waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
+
+                    runs(function() {
+                        expect(copyToWin).toHaveBeenCalled();
+                        expect(fail).not.toHaveBeenCalled();
+                    });
+                });
+                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
+                waitsForAny(getFileWin, getFileFail);
+            });
         });
 
         it("security.spec.42 success callback should be called with appworkspace file url", function() {
@@ -945,24 +942,22 @@ describe("Security", function() {
                 deleteFile(persistent_root, sourceFilePath);
             });
 
-            var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
-                runs(function() {
-                    fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
-                });
-
-                waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
-
-                runs(function() {
-                    expect(copyToWin).toHaveBeenCalled();
-                    expect(fail).not.toHaveBeenCalled();
-                });
-            });
-
             runs(function() {
-                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
-            });
+                var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
+                    runs(function() {
+                        fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
+                    });
 
-            waitsForAny(getFileWin, getFileFail);
+                    waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
+
+                    runs(function() {
+                        expect(copyToWin).toHaveBeenCalled();
+                        expect(fail).not.toHaveBeenCalled();
+                    });
+                });
+                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
+                waitsForAny(getFileWin, getFileFail);
+            });
         });
 
         it("security.spec.44 success callback should be called with appworkspace cdvfile url", function() {
@@ -1018,24 +1013,22 @@ describe("Security", function() {
                 deleteFile(persistent_root, sourceFilePath);
             });
 
-            var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
-                runs(function() {
-                    fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
-                });
-
-                waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
-
-                runs(function() {
-                    expect(copyToWin).toHaveBeenCalled();
-                    expect(fail).not.toHaveBeenCalled();
-                });
-            });
-
             runs(function() {
-                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
-            });
+                var getFileWin = jasmine.createSpy("getFileWin").andCallFake(function(fileEntry) {
+                    runs(function() {
+                        fileEntry.copyTo(persistent_root, sourceFilePath, copyToWin, fail);
+                    });
 
-            waitsForAny(getFileWin, getFileFail);
+                    waitsFor(function() { return copyToWin.wasCalled || fail.wasCalled; }, "copyToWin never called", timeout);
+
+                    runs(function() {
+                        expect(copyToWin).toHaveBeenCalled();
+                        expect(fail).not.toHaveBeenCalled();
+                    });
+                });
+                workspace_root.getFile(sourceFilePath, {create:false}, getFileWin, getFileFail);
+                waitsForAny(getFileWin, getFileFail);
+            });
         });
     });
 });

@@ -225,8 +225,7 @@ public class XSecurityExt extends CordovaPlugin {
             throws IllegalArgumentException, IOException {
         Uri fileUri = resolveUri(filePath);
         if (!XFileUtils.isFilePathValid(fileUri.getPath())) {
-            // 加密原文件不存在应该抛出FileNotFoundException异常
-            throw new FileNotFoundException();
+            throw new IllegalArgumentException();
         }
         InputStream inputStream = mResourceApi.openForRead(fileUri).inputStream;
         if (null == inputStream) {
@@ -337,6 +336,10 @@ public class XSecurityExt extends CordovaPlugin {
             String targetFilePath) throws XCryptionException,
             IllegalArgumentException, IOException {
         InputStream sourceIs = readFile(sourceFilePath);
+        if (!XFileUtils.isFilePathValid(targetFilePath)) {
+            XLog.e(CLASS_NAME, "Method encryptFile: targetFilePath is illegal!");
+            throw new IllegalArgumentException();
+        }
         targetFilePath = createTargetFile(targetFilePath);
         return cryptFile(sKey, sourceIs, targetFilePath, true);
     }
@@ -419,6 +422,10 @@ public class XSecurityExt extends CordovaPlugin {
             String targetFilePath) throws XCryptionException,
             IllegalArgumentException, IOException {
         InputStream sourceIs = readFile(sourceFilePath);
+        if (!XFileUtils.isFilePathValid(targetFilePath)) {
+            XLog.e(CLASS_NAME, "Method decryptFile: targetFilePath is illegal!");
+            throw new IllegalArgumentException();
+        }
         targetFilePath = createTargetFile(targetFilePath);
         return cryptFile(sKey, sourceIs, targetFilePath, false);
     }

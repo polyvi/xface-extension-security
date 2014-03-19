@@ -38,3 +38,14 @@
  *  [iOS]Invoke file plugin resolveFilePath: method to process file path
  *  [iOS] Improve the processing logic of file path and support more path forms.
  *  Incremented plugin version on dev branch to 1.0.2-dev
+
+
+## 1.0.3 (Wed Mar 19 2014)
+
+
+ *  Cut size of test files
+ *  [Android]Fix parse target file path error
+ *  issue 2 automatic->Security: 29 failing
+ *  [Android]Add exception throws
+ *  issue 1 Security:buttons has no response in test page. Bug reason:initialize method should call super.initilize first. Solution: call super.initilize first.
+ *  Incremented plugin version on dev branch to 1.0.3-dev

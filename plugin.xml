@@ -45,7 +45,7 @@
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="Security">
-                <param name="android-package" value="com.polyvi.xface.extension.security.XSecurityExt"/>
+                <param name="android-package" value="com.polyvi.xface.extension.security.SecurityExt"/>
             </feature>
         </config-file>
 
@@ -53,9 +53,10 @@
             <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
         </config-file>
 
-        <source-file src="src/android/XSecurityExt.java" target-dir="src/com/polyvi/xface/extension/security" />
+        <source-file src="src/android/SecurityExt.java" target-dir="src/com/polyvi/xface/extension/security" />
 
-     </platform>
+        <dependency id="com.polyvi.xface.utils" />
+    </platform>
 
     <!-- ios -->
     <platform name="ios">

@@ -32,23 +32,21 @@ import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaResourceApi;
 import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.LOG;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.net.Uri;
 
-import com.polyvi.xface.exception.XCryptionException;
-import com.polyvi.xface.util.XBase64;
-import com.polyvi.xface.util.XCryptor;
-import com.polyvi.xface.util.XFileUtils;
-import com.polyvi.xface.util.XLog;
-import com.polyvi.xface.util.XPathResolver;
-import com.polyvi.xface.util.XStringUtils;
-import com.polyvi.xface.view.XAppWebView;
+import com.polyvi.xface.utils.Base64;
+import com.polyvi.xface.utils.CryptionException;
+import com.polyvi.xface.utils.Cryptor;
+import com.polyvi.xface.utils.FileUtils;
+import com.polyvi.xface.utils.StringUtils;
 
-public class XSecurityExt extends CordovaPlugin {
-    private static final String CLASS_NAME = XSecurityExt.class.getSimpleName();
+public class SecurityExt extends CordovaPlugin {
+    private static final String CLASS_NAME = SecurityExt.class.getSimpleName();
 
     /** Security 提供给js用户的接口名字 */
     private static final String COMMAND_ENCRYPT = "encrypt";
@@ -81,7 +79,7 @@ public class XSecurityExt extends CordovaPlugin {
     private static final String KEY_ENCODE_KEY_TYPE = "EncodeKeyType";
 
     /** 加解密工具类 */
-    private XCryptor mCryptor;
+    private Cryptor mCryptor;
     private CordovaResourceApi mResourceApi;
 
     private interface SecurityOp {
@@ -91,7 +89,7 @@ public class XSecurityExt extends CordovaPlugin {
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
-        mCryptor = new XCryptor();
+        mCryptor = new Cryptor();
         mResourceApi = this.webView.getResourceApi();
     }
 
@@ -166,13 +164,13 @@ public class XSecurityExt extends CordovaPlugin {
                 try {
                     securityOp.run();
                 } catch (Exception e) {
-                    XLog.e(CLASS_NAME, e.getMessage());
+                    LOG.e(CLASS_NAME, e.getMessage());
                     e.printStackTrace();
                     if (e instanceof IllegalArgumentException) {
                         callbackContext.error(PATH_ERR);
                     } else if (e instanceof FileNotFoundException) {
                         callbackContext.error(FILE_NOT_FOUND_ERR);
-                    } else if (e instanceof XCryptionException) {
+                    } else if (e instanceof CryptionException) {
                         callbackContext.error(OPERATION_ERR);
                     } else if (e instanceof IOException) {
                         callbackContext.error(OPERATION_ERR);
@@ -185,17 +183,6 @@ public class XSecurityExt extends CordovaPlugin {
     }
 
     /**
-     * 获取workspace路径
-     *
-     * @return
-     */
-    private String getWorkspacePath() {
-        XAppWebView xAppWebView = (XAppWebView) this.webView;
-        String appWorkspace = xAppWebView.getOwnerApp().getWorkSpace();
-        return appWorkspace;
-    }
-
-    /**
      * 解析路径
      *
      * @param filePath
@@ -204,13 +191,11 @@ public class XSecurityExt extends CordovaPlugin {
      */
     private Uri resolveUri(String filePath) throws IllegalArgumentException {
         // 检查传入文件路径是否为空
-        if (XStringUtils.isEmptyString(filePath)) {
+        if (null == filePath || "".equals(filePath)) {
             throw new IllegalArgumentException();
         }
-
-        XPathResolver pathResolver = new XPathResolver(filePath,
-                getWorkspacePath());
-        return pathResolver.getUri(mResourceApi);
+        Uri uri = Uri.parse(filePath);
+        return mResourceApi.remapUri(uri);
     }
 
     /**
@@ -224,7 +209,7 @@ public class XSecurityExt extends CordovaPlugin {
     private InputStream readFile(String filePath)
             throws IllegalArgumentException, IOException {
         Uri fileUri = resolveUri(filePath);
-        if (!XFileUtils.isFilePathValid(fileUri.getPath())) {
+        if (isPathInvalid(fileUri.getPath())) {
             throw new IllegalArgumentException();
         }
         InputStream inputStream = mResourceApi.openForRead(fileUri).inputStream;
@@ -249,10 +234,33 @@ public class XSecurityExt extends CordovaPlugin {
         if (requestFile.exists()) {
             requestFile.delete();
         }
-        if (!XFileUtils.createFile(absFilePath)) {
+        if (!createFile(absFilePath)) {
             throw new FileNotFoundException();
         }
         return absFilePath;
+    }
+
+    /**
+     * 创建文件和文件所在的目录
+     *
+     * @param path
+     *            文件的绝对路径
+     * @return 成功返回true,失败返回false
+     */
+    private Boolean createFile(String path) {
+        File file = new File(path);
+        File parantFile = file.getParentFile();
+        if (null != parantFile && !parantFile.exists() && !parantFile.mkdirs()) {
+            return false;
+        }
+
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -267,10 +275,10 @@ public class XSecurityExt extends CordovaPlugin {
      * @return 经过加密的数据
      */
     private String encrypt(String sKey, String sourceData, JSONObject options)
-            throws XCryptionException, XCryptionException {
-        if (XStringUtils.isEmptyString(sKey)) {
-            XLog.e(CLASS_NAME, KEY_EMPTY_ERROR);
-            throw new XCryptionException(KEY_EMPTY_ERROR);
+            throws CryptionException, CryptionException {
+        if (null == sKey || "".equals(sKey)) {
+            LOG.e(CLASS_NAME, KEY_EMPTY_ERROR);
+            throw new CryptionException(KEY_EMPTY_ERROR);
         }
         int cryptAlgorithm = DES_ALOGRITHEM;
         int encodeDataType = ENCODE_TYPE_STRING;
@@ -289,30 +297,30 @@ public class XSecurityExt extends CordovaPlugin {
         case TRIPLE_DES_ALOGRITHEM:
             switch (encodeDataType) {
             case ENCODE_TYPE_HEX:
-                return XStringUtils.hexEncode(mCryptor.encryptBytesFor3DES(
+                return StringUtils.hexEncode(mCryptor.encryptBytesFor3DES(
                         sourceData.getBytes(), keyBytes));
             default:
-                return XBase64.encodeToString((mCryptor.encryptBytesFor3DES(
-                        sourceData.getBytes(), keyBytes)), XBase64.NO_WRAP);
+                return Base64.encodeToString((mCryptor.encryptBytesFor3DES(
+                        sourceData.getBytes(), keyBytes)), Base64.NO_WRAP);
             }
         case RSA_ALOGRITHEM:
             switch (encodeDataType) {
             case ENCODE_TYPE_HEX:
-                return XStringUtils.hexEncode(mCryptor.encryptRSA(
+                return StringUtils.hexEncode(mCryptor.encryptRSA(
                         sourceData.getBytes(), keyBytes));
             default:
-                return XBase64.encodeToString(
+                return Base64.encodeToString(
                         (mCryptor.encryptRSA(sourceData.getBytes(), keyBytes)),
-                        XBase64.NO_WRAP);
+                        Base64.NO_WRAP);
             }
         default:
             switch (encodeDataType) {
             case ENCODE_TYPE_HEX:
-                return XStringUtils.hexEncode(mCryptor.encryptBytesForDES(
+                return StringUtils.hexEncode(mCryptor.encryptBytesForDES(
                         sourceData.getBytes(), keyBytes));
             default:
-                return XBase64.encodeToString((mCryptor.encryptBytesForDES(
-                        sourceData.getBytes(), keyBytes)), XBase64.NO_WRAP);
+                return Base64.encodeToString((mCryptor.encryptBytesForDES(
+                        sourceData.getBytes(), keyBytes)), Base64.NO_WRAP);
             }
         }
     }
@@ -327,21 +335,39 @@ public class XSecurityExt extends CordovaPlugin {
      * @param targetFilePath
      *            经过加密得到的文件的路径
      * @return 加密后文件的相对路径
-     * @throws XCryptionException
+     * @throws CryptionException
      * @throws IOException
      * @throws IllegalArgumentException
      * @throws FileNotFoundException
      */
     private String encryptFile(String sKey, String sourceFilePath,
-            String targetFilePath) throws XCryptionException,
+            String targetFilePath) throws CryptionException,
             IllegalArgumentException, IOException {
         InputStream sourceIs = readFile(sourceFilePath);
-        if (!XFileUtils.isFilePathValid(Uri.parse(targetFilePath).getPath())) {
-            XLog.e(CLASS_NAME, "Method encryptFile: targetFilePath is illegal!");
+        if (isPathInvalid(Uri.parse(targetFilePath).getPath())) {
+            LOG.e(CLASS_NAME, "Method encryptFile: targetFilePath is illegal!");
             throw new IllegalArgumentException();
         }
         targetFilePath = createTargetFile(targetFilePath);
         return cryptFile(sKey, sourceIs, targetFilePath, true);
+    }
+
+    /**
+     * 检查路径是否非法
+     *
+     * @param path
+     * @return
+     */
+    private Boolean isPathInvalid(String path) {
+        if (null == path || "".equals(path)) {
+            LOG.e(CLASS_NAME, "This path is illegal.");
+            return true;
+        } else if (path.contains(":")) {
+            // Check for a ":" character in the file to line up with BB and iOS
+            LOG.e(CLASS_NAME, "This path has an invalid \":\" in it.");
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -356,10 +382,10 @@ public class XSecurityExt extends CordovaPlugin {
      * @return 经过解密的数据
      */
     private String decrypt(String sKey, String sourceData, JSONObject options)
-            throws XCryptionException {
-        if (XStringUtils.isEmptyString(sKey)) {
-            XLog.e(CLASS_NAME, KEY_EMPTY_ERROR);
-            throw new XCryptionException(KEY_EMPTY_ERROR);
+            throws CryptionException {
+        if (null == sKey || "".equals(sKey)) {
+            LOG.e(CLASS_NAME, KEY_EMPTY_ERROR);
+            throw new CryptionException(KEY_EMPTY_ERROR);
         }
         int cryptAlgorithm = DES_ALOGRITHEM;
         int encodeDataType = ENCODE_TYPE_STRING;
@@ -379,28 +405,28 @@ public class XSecurityExt extends CordovaPlugin {
             switch (encodeDataType) {
             case ENCODE_TYPE_HEX:
                 return new String(mCryptor.decryptBytesFor3DES(
-                        XStringUtils.hexDecode(sourceData), keyBytes));
+                        StringUtils.hexDecode(sourceData), keyBytes));
             default:
                 return new String(mCryptor.decryptBytesFor3DES(
-                        XBase64.decode(sourceData, XBase64.NO_WRAP), keyBytes));
+                        Base64.decode(sourceData, Base64.NO_WRAP), keyBytes));
             }
         case RSA_ALOGRITHEM:
             switch (encodeDataType) {
             case ENCODE_TYPE_HEX:
                 return new String(mCryptor.decryptRSA(
-                        XStringUtils.hexDecode(sourceData), keyBytes));
+                        StringUtils.hexDecode(sourceData), keyBytes));
             default:
                 return new String(mCryptor.decryptRSA(
-                        XBase64.decode(sourceData, XBase64.NO_WRAP), keyBytes));
+                        Base64.decode(sourceData, Base64.NO_WRAP), keyBytes));
             }
         default:
             switch (encodeDataType) {
             case ENCODE_TYPE_HEX:
                 return new String(mCryptor.decryptBytesForDES(
-                        XStringUtils.hexDecode(sourceData), keyBytes));
+                        StringUtils.hexDecode(sourceData), keyBytes));
             default:
                 return new String(mCryptor.decryptBytesForDES(
-                        XBase64.decode(sourceData, XBase64.NO_WRAP), keyBytes));
+                        Base64.decode(sourceData, Base64.NO_WRAP), keyBytes));
             }
         }
     }
@@ -419,11 +445,11 @@ public class XSecurityExt extends CordovaPlugin {
      * @throws IllegalArgumentException
      */
     private String decryptFile(String sKey, String sourceFilePath,
-            String targetFilePath) throws XCryptionException,
+            String targetFilePath) throws CryptionException,
             IllegalArgumentException, IOException {
         InputStream sourceIs = readFile(sourceFilePath);
-        if (!XFileUtils.isFilePathValid(Uri.parse(targetFilePath).getPath())) {
-            XLog.e(CLASS_NAME, "Method decryptFile: targetFilePath is illegal!");
+        if (isPathInvalid(Uri.parse(targetFilePath).getPath())) {
+            LOG.e(CLASS_NAME, "Method decryptFile: targetFilePath is illegal!");
             throw new IllegalArgumentException();
         }
         targetFilePath = createTargetFile(targetFilePath);
@@ -438,11 +464,11 @@ public class XSecurityExt extends CordovaPlugin {
      * @param absTargetFilePath
      * @param isEncrypt
      * @return
-     * @throws XCryptionException
+     * @throws CryptionException
      */
     private String cryptFile(String sKey, InputStream fileIs,
             String absTargetFilePath, boolean isEncrypt)
-            throws XCryptionException {
+            throws CryptionException {
         byte[] keyBytes = getBytesEncode(ENCODE_TYPE_STRING, sKey);
         byte[] cryptedBytes = null;
         if (isEncrypt) {
@@ -450,10 +476,10 @@ public class XSecurityExt extends CordovaPlugin {
         } else {
             cryptedBytes = mCryptor.decryptStreamForDES(keyBytes, fileIs);
         }
-        if (XFileUtils.writeFileByByte(absTargetFilePath, cryptedBytes)) {
+        if (FileUtils.writeFileByByte(absTargetFilePath, cryptedBytes)) {
             return absTargetFilePath;
         }
-        throw new XCryptionException(CRYPTION_ERROR);
+        throw new CryptionException(CRYPTION_ERROR);
     }
 
     /**
@@ -462,20 +488,20 @@ public class XSecurityExt extends CordovaPlugin {
      * @param data
      * @return
      * @throws UnsupportedEncodingException
-     * @throws XCryptionException
+     * @throws CryptionException
      */
-    private String digest(String data) throws XCryptionException {
-        if (XStringUtils.isEmptyString(data)) {
-            XLog.e(CLASS_NAME, KEY_EMPTY_ERROR);
-            throw new XCryptionException(KEY_EMPTY_ERROR);
+    private String digest(String data) throws CryptionException {
+        if (null == data || "".equals(data)) {
+            LOG.e(CLASS_NAME, KEY_EMPTY_ERROR);
+            throw new CryptionException(KEY_EMPTY_ERROR);
         }
-        XCryptor cryptor = new XCryptor();
+        Cryptor cryptor = new Cryptor();
         try {
             return cryptor.calMD5Value(data.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
-            XLog.e(CLASS_NAME, "digest failed: UnsupportedEncodingException");
+            LOG.e(CLASS_NAME, "digest failed: UnsupportedEncodingException");
             e.printStackTrace();
-            throw new XCryptionException(CRYPTION_ERROR);
+            throw new CryptionException(CRYPTION_ERROR);
         }
     }
 
@@ -490,14 +516,14 @@ public class XSecurityExt extends CordovaPlugin {
      */
     private byte[] getBytesEncode(int encodeKeyType, String keyString)
             throws IllegalArgumentException {
-        if (XStringUtils.isEmptyString(keyString)) {
+        if (null == keyString || "".equals(keyString)) {
             throw new IllegalArgumentException();
         }
         switch (encodeKeyType) {
         case ENCODE_TYPE_BASE64:
-            return XBase64.decode(keyString, XBase64.NO_WRAP);
+            return Base64.decode(keyString, Base64.NO_WRAP);
         case ENCODE_TYPE_HEX:
-            return XStringUtils.hexDecode(keyString);
+            return StringUtils.hexDecode(keyString);
         default:
             return keyString.getBytes();
         }

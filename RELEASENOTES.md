@@ -49,3 +49,10 @@
  *  [Android]Add exception throws
  *  issue 1 Security:buttons has no response in test page. Bug reason:initialize method should call super.initilize first. Solution: call super.initilize first.
  *  Incremented plugin version on dev branch to 1.0.3-dev
+
+
+## 1.0.4 (Fri May 30 2014)
+
+
+ *  Delete useless space in plugin.xml
+ *  Incremented plugin version on dev branch to 1.0.4-dev

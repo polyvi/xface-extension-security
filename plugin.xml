@@ -3,7 +3,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         id="com.polyvi.xface.extension.security"
         xmlns:android="http://schemas.android.com/apk/res/android"
-        version="1.0.4">
+        version="1.0.5-dev">
 
     <name>Security</name>
     <author>PolyVi Inc.</author>
